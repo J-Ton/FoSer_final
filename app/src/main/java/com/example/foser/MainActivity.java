@@ -1,12 +1,9 @@
 package com.example.foser;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.ActivityManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,8 +11,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import android.content.SharedPreferences;
-
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 
@@ -25,10 +22,8 @@ public class MainActivity extends AppCompatActivity {
 
     private Button buttonStart, buttonStop, buttonRestart;
     private TextView textInfoService, textInfoSettings;
-    private String message;
-    private Boolean show_time, work, work_double;
-
-
+    private String message, incrementation_time;
+    private Boolean show_time, work, work_double, without_reset;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +90,8 @@ public class MainActivity extends AppCompatActivity {
         startIntent.putExtra(MyForegroundService.TIME,show_time);
         startIntent.putExtra(MyForegroundService.WORK,work);
         startIntent.putExtra(MyForegroundService.WORK_DOUBLE,work_double);
+        startIntent.putExtra(MyForegroundService.INCREMENTATION_TIME, incrementation_time);
+        startIntent.putExtra(MyForegroundService.WITHOUT_RESET,without_reset);
 
         ContextCompat.startForegroundService(this, startIntent);
         updateUI();
@@ -118,11 +115,15 @@ public class MainActivity extends AppCompatActivity {
         show_time = sharedPreferences.getBoolean("show_time", true);
         work = sharedPreferences.getBoolean("sync",true);
         work_double = sharedPreferences.getBoolean("double", false);
+        incrementation_time = sharedPreferences.getString("incrementation_time", "2s");
+        without_reset = sharedPreferences.getBoolean("without_reset", false);
 
         return "Message: " + message + "\n"
-                +"show_time: " + show_time.toString() +"\n"
-                +"work: " + work.toString() + "\n"
-                +"double: " + work_double.toString();
+                +"Show_time: " + show_time.toString() +"\n"
+                +"Work: " + work.toString() + "\n"
+                +"Double: " + work_double.toString() + "\n"
+                +"Incrementation time: " + incrementation_time + "\n"
+                +"Without reset: " + without_reset.toString();
     }
 
     private void updateUI(){

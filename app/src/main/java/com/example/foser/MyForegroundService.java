@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Handler;
@@ -16,6 +17,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+import androidx.preference.PreferenceManager;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -31,11 +33,13 @@ public class MyForegroundService extends Service {
     public static final String TIME = "time";
     public static final String WORK = "work";
     public static final String WORK_DOUBLE = "work_double";
+    public static final String INCREMENTATION_TIME = "incrementation_time";
+    public static final String WITHOUT_RESET = "without_reset";
 
     //3. Wartości ustawień
-    private String message;
-    private Boolean show_time, do_work, double_speed;
-    private final long period = 2000; //2s
+    private String message, time;
+    private Boolean show_time, do_work, double_speed, without_reset;
+    private long period = 2000; //2s
 
     //4.
     private Context ctx;
@@ -48,38 +52,16 @@ public class MyForegroundService extends Service {
     private TimerTask timerTask;
     final Handler handler = new Handler();
 
+    SharedPreferences sharedPreferences;
+
     @Override
     public void onCreate() {
         super.onCreate();
         ctx = this;
         notificationIntent = new Intent(ctx, MainActivity.class);
         pendingIntent = PendingIntent.getActivity(this,0,notificationIntent,0);
-
-        counter = 0;
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         timer = new Timer();
-        timerTask = new TimerTask() {
-            @Override
-            public void run() {
-                counter++;
-                handler.post(runnable);
-            }
-        };
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        handler.removeCallbacks(runnable);
-        timer.cancel();
-        timer.purge();
-        timer = null;
-        super.onDestroy();
-    }
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -91,11 +73,34 @@ public class MyForegroundService extends Service {
         do_work = intent.getBooleanExtra(WORK, false);
         double_speed = intent.getBooleanExtra(WORK_DOUBLE, false);
 
+        time = intent.getStringExtra(INCREMENTATION_TIME);
+        without_reset = intent.getBooleanExtra(WITHOUT_RESET, false);
+        switch(time){
+            case "2s":
+                period = 2000;  //zmieniamy period w zależności od wybranego czasu
+                break;
+            case "5s":
+                period = 5000;
+                break;
+            case "10s":
+                period = 10000;
+                break;
+        }
+
+        if(without_reset){
+            counter = sharedPreferences.getInt("counter",0); //pobieranie zapisanej wartosci licznika
+        }else {
+            counter = 0 ; //wyzerowanie wartosci licznika
+        }
+        timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                counter++;
+                handler.post(runnable);
+            }
+        };
+
         createNotificationChannel();
-
-        //Intent notificationIntent = new Intent(this, MainActivity.class);
-        //PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-
         /**
          * Notification.Builder zamieniono na NotificationCompat.Builder
          * aby aplikacje można było uruchomić na urządzeniu z Android 7.1 i niżej
@@ -120,10 +125,11 @@ public class MyForegroundService extends Service {
             timer.schedule(timerTask, 0L, double_speed ? period / 2L : period);
         }
 
-        String info = "Start working..."
-                + "\n show_time=" + show_time.toString()
+        String info = "show_time=" + show_time.toString()
                 + "\n do_work=" + do_work.toString()
-                + "\n double_speed=" + double_speed.toString();
+                + "\n double_speed=" + double_speed.toString()
+                + "\n period= " + period
+                + "\n restart= " + without_reset.toString();
 
         Toast.makeText(this, info, Toast.LENGTH_LONG).show();
     }
@@ -157,5 +163,22 @@ public class MyForegroundService extends Service {
             manager.notify(1,notification);
         }
     };
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacks(runnable);
+        timer.cancel();
+        timer.purge();
+        timer = null;
+        sharedPreferences.edit().putInt("counter" ,counter).commit(); //zapisywanie wartosci licznika
+        super.onDestroy();
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
 }
 

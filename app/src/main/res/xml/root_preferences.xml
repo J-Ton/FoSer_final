@@ -38,12 +38,13 @@
             android:entries="@array/time_offset"
             android:entryValues="@array/time_offset"
             android:icon="@drawable/waiting"
-            android:key="timer_offset"
-            android:title="Czas inkrementacji timera " />
+            android:key="incrementation_time"
+            android:title="Czas inkrementacji timera "
+            app:iconSpaceReserved="true" />
         <SwitchPreference
             android:defaultValue="false"
             android:icon="@drawable/wall_clock"
-            android:key="not_new"
+            android:key="without_reset"
             android:title="Nie odliczaj od nowa" />
     </PreferenceCategory>
 
