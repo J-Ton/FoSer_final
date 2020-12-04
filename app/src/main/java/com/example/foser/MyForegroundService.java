@@ -5,15 +5,20 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MyForegroundService extends Service {
 
@@ -30,14 +35,44 @@ public class MyForegroundService extends Service {
     //3. Wartości ustawień
     private String message;
     private Boolean show_time, do_work, double_speed;
+    private final long period = 2000; //2s
+
+    //4.
+    private Context ctx;
+    private Intent notificationIntent;
+    private PendingIntent pendingIntent;
+
+    //5.
+    private int counter;
+    private Timer timer;
+    private TimerTask timerTask;
+    final Handler handler = new Handler();
 
     @Override
     public void onCreate() {
         super.onCreate();
+        ctx = this;
+        notificationIntent = new Intent(ctx, MainActivity.class);
+        pendingIntent = PendingIntent.getActivity(this,0,notificationIntent,0);
+
+        counter = 0;
+        timer = new Timer();
+        timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                counter++;
+                handler.post(runnable);
+            }
+        };
     }
 
     @Override
     public void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacks(runnable);
+        timer.cancel();
+        timer.purge();
+        timer = null;
         super.onDestroy();
     }
 
@@ -58,8 +93,8 @@ public class MyForegroundService extends Service {
 
         createNotificationChannel();
 
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        //Intent notificationIntent = new Intent(this, MainActivity.class);
+        //PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
         /**
          * Notification.Builder zamieniono na NotificationCompat.Builder
@@ -76,19 +111,13 @@ public class MyForegroundService extends Service {
                 .build();
 
         startForeground(1, notification);
-
         doWork();
-
         return START_NOT_STICKY;
     }
 
     private void doWork() {
-
-        try {
-            Thread.sleep(5000);
-
-        } catch (Exception e) {
-            //
+        if(do_work) {
+            timer.schedule(timerTask, 0L, double_speed ? period / 2L : period);
         }
 
         String info = "Start working..."
@@ -111,5 +140,22 @@ public class MyForegroundService extends Service {
             manager.createNotificationChannel(serviceChannel);
         }
     }
+
+    final Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            Notification notification = new NotificationCompat.Builder(ctx, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_my_icon)
+                    .setContentTitle(getString(R.string.ser_title))
+                    .setShowWhen(show_time)
+                    .setContentText(message + " " + String.valueOf(counter))
+                    .setLargeIcon(BitmapFactory.decodeResource (getResources() , R.drawable.circle ))
+                    .setContentIntent(pendingIntent)
+                    .build();
+
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.notify(1,notification);
+        }
+    };
 }
 

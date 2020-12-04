@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.ActivityManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -28,37 +29,38 @@ public class MainActivity extends AppCompatActivity {
     private Boolean show_time, work, work_double;
 
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        findViewById(R.id.buttonStart).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                clickStart(v);
-            }
-        });
-
-        findViewById(R.id.buttonStop).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                clickStop(v);
-            }
-        });
-
-        findViewById(R.id.buttonRestart).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                clickRestart(v);
-            }
-        });
 
         buttonStart = (Button)findViewById(R.id.buttonStart);
         buttonStop = (Button)findViewById(R.id.buttonStop);
         buttonRestart = (Button)findViewById(R.id.buttonRestart);
         textInfoService = (TextView)findViewById(R.id.textInfoServiceState);
         textInfoSettings = (TextView) findViewById(R.id.textInfoSettings);
+
+        //listeners
+        buttonStart.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clickStart(v);
+            }
+        });
+        buttonStop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clickStop(v);
+            }
+        });
+        buttonRestart.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clickRestart(v);
+            }
+        });
+
         updateUI();
     }
 
@@ -93,7 +95,6 @@ public class MainActivity extends AppCompatActivity {
         startIntent.putExtra(MyForegroundService.TIME,show_time);
         startIntent.putExtra(MyForegroundService.WORK,work);
         startIntent.putExtra(MyForegroundService.WORK_DOUBLE,work_double);
-
 
         ContextCompat.startForegroundService(this, startIntent);
         updateUI();
