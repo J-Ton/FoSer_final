@@ -37,10 +37,12 @@
             android:defaultValue="true"
             android:entries="@array/time_offset"
             android:entryValues="@array/time_offset"
+            android:icon="@drawable/waiting"
             android:key="timer_offset"
             android:title="Czas inkrementacji timera " />
         <SwitchPreference
             android:defaultValue="false"
+            android:icon="@drawable/wall_clock"
             android:key="not_new"
             android:title="Nie odliczaj od nowa" />
     </PreferenceCategory>
